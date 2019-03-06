@@ -1,10 +1,14 @@
 package org.academiadecodigo.bootcamp;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import com.sun.corba.se.spi.orbutil.threadpool.Work;
+
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Server {
 
@@ -15,38 +19,65 @@ public class Server {
 
         try {
             Server server = new Server();
-            while (true){
-                server.interact(server.connect());
+            while (true) {
+                server.connect();
             }
-        }catch (IOException ex){
+        } catch (IOException ex) {
         }
     }
 
 
     private ServerSocket serverSocket;
+    private ArrayList<Worker> workers;
 
 
-    public Server () throws IOException{
+    public Server() throws IOException {
         serverSocket = new ServerSocket(PORT);
     }
 
 
-    public Socket connect () throws IOException {
+    public void connect() throws IOException {
         Socket socket = serverSocket.accept();
         System.out.println("A new connection was established with " + socket.getInetAddress() + " at port " + socket.getPort());
-        return socket;
+        Worker worker = new Worker(socket);
+        ExecutorService thread = Executors.newCachedThreadPool();
+        thread.submit(worker);
     }
 
 
-    public void interact (Socket socket) throws IOException{
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        while (true) {
-            System.out.println(in.readLine());
-            String clientNickname = in.readLine();
-            System.out.println(clientNickname);
-            String message = in.readLine();
-            System.out.println(message);
+    //----------------------------------------------------------------------------------------------------------------------------
+
+    public class Worker implements Runnable {
+
+        private Socket socket;
+
+        public Worker(Socket socket) {
+            this.socket = socket;
+        }
+
+
+        @Override
+        public void run() {
+
+            try {
+                PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+                out.println("Enter your nickname: ");
+
+
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String nickname = in.readLine();
+                out.println("WELCOME " + nickname + " :) ");
+
+                System.out.println(nickname + " logged in");
+                while (socket.isBound()) {
+                    out.println(nickname + ": ");
+                    System.out.println(nickname + ": " + in.readLine());
+                }
+            }catch (IOException ex){
+
+            }
+
         }
     }
-
 }
+
