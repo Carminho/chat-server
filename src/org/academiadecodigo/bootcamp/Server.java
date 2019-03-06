@@ -132,12 +132,7 @@ public class Server {
 
         private void send(String message) {
             out.println(message);
-            try {
-                saveLog.write(message + "\n");
-                saveLog.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            saveToFile(message);
         }
 
 
@@ -150,6 +145,16 @@ public class Server {
             out.close();
             in.close();
             workers.remove(this);
+        }
+
+
+        private void saveToFile (String message){
+            try {
+                saveLog.write(message + "\n");
+                saveLog.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }
