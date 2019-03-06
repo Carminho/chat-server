@@ -1,9 +1,6 @@
 package org.academiadecodigo.bootcamp;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -15,9 +12,9 @@ public class Client {
     private Socket socket;
     private String nickname;
     private BufferedReader terminalIn;
+    private PrintWriter out;
 
-
-    public static void main(String[] args) {
+    public static void main(String[] args) {                                                                    //thread 1
 
         Client client = new Client();
 
@@ -39,39 +36,42 @@ public class Client {
         socket = new Socket(HOSTNAME, Server.PORT);
         Thread thread = new Thread(new MessageOut(socket));
         thread.start();
-        System.out.println("a new thread was initiated");
     }
 
 
-    public BufferedReader setNickname () throws IOException {
+    public void setNickname () throws IOException {
         terminalIn = new BufferedReader(new InputStreamReader(System.in));
         System.out.print("Enter your nickname: ");
         nickname = terminalIn.readLine();
-        return terminalIn;
+
+        //send nickname to server
+        out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+        out.println(nickname + " logged in");
+        out.flush();
     }
 
 
     private void startConversation () throws IOException {
-        //send nickname to server
-        PrintWriter out = new PrintWriter(socket.getOutputStream());
-        out.print(nickname + "is logged.");
 
         //message introduced by client and sent to server
         System.out.print(nickname + ": ");
         String message = terminalIn.readLine();
-        out.print(nickname + ": " + message);
+        out.println(nickname + ": " + message);
         out.flush();
+
+
 
     }
 
 
-    private class MessageOut implements Runnable {
+    private class MessageOut implements Runnable {                                                              //thread 2
 
         private Socket socket;
 
         public MessageOut (Socket socket){
             this.socket = socket;
         }
+
 
         @Override
         public void run(){
