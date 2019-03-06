@@ -70,7 +70,7 @@ public class Server {
 
                 System.out.println(nickname + " logged in");
                 while (socket.isBound()) {
-                    out.println(nickname + ": ");
+                    //out.println(nickname + ": ");
                     System.out.println(nickname + ": " + in.readLine());
                 }
             }catch (IOException ex){
