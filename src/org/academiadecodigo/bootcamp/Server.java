@@ -31,7 +31,7 @@ public class Server {
 
     public void connect () throws IOException {
         Socket socket = serverSocket.accept();
-        System.out.println("A new connection was established with " + socket.getInetAddress() + " at port " + socket.getPort() + ".");
+        System.out.println("A new connection was established with " + socket.getInetAddress() + " at port " + socket.getPort());
     }
 
 

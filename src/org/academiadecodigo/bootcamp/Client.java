@@ -12,6 +12,11 @@ public class Client {
     private final int PORT = Server.PORT;
     private final String HOSTNAME = "localhost";
 
+    private Socket socket;
+    private String nickname;
+    private BufferedReader terminalIn;
+
+
     public static void main(String[] args) {
 
         Client client = new Client();
@@ -30,17 +35,15 @@ public class Client {
     }
 
 
-    private String nickname;
-    private Socket socket;
-    private BufferedReader terminalIn;
-
-
     public void connect () throws UnknownHostException, IOException {
-        socket = new Socket(HOSTNAME,Server.PORT);
+        socket = new Socket(HOSTNAME, Server.PORT);
+        Thread thread = new Thread(new MessageOut(socket));
+        thread.start();
+        System.out.println("a new thread was initiated");
     }
 
 
-    public BufferedReader setNickname () throws IOException{
+    public BufferedReader setNickname () throws IOException {
         terminalIn = new BufferedReader(new InputStreamReader(System.in));
         System.out.print("Enter your nickname: ");
         nickname = terminalIn.readLine();
@@ -48,25 +51,39 @@ public class Client {
     }
 
 
-    private void startConversation () throws IOException{
+    private void startConversation () throws IOException {
         //send nickname to server
         PrintWriter out = new PrintWriter(socket.getOutputStream());
         out.print(nickname + "is logged.");
-        //start conversation
+
+        //message introduced by client and sent to server
         System.out.print(nickname + ": ");
-        terminalIn.readLine();
+        String message = terminalIn.readLine();
+        out.print(nickname + ": " + message);
         out.flush();
 
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        System.out.println("Server: " + in.readLine());
     }
 
 
+    private class MessageOut implements Runnable {
 
+        private Socket socket;
 
+        public MessageOut (Socket socket){
+            this.socket = socket;
+        }
 
-
-
-
+        @Override
+        public void run(){
+            //messages received from server and printed to terminal
+            try {
+                while(true) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    System.out.println("Server: " + in.readLine());
+                }
+            }catch (IOException ex){
+            }
+        }
+    }
 
 }
