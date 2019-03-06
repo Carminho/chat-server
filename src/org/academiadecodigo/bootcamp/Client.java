@@ -40,8 +40,10 @@ public class Client {
             @Override
             public void run() {
                 try {
-                    while (true) {
-                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                    while (socket.isBound()) {
+
                         System.out.println(in.readLine());
                     }
                 } catch (IOException e){

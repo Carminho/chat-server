@@ -12,6 +12,7 @@ public class Server {
     public static final int PORT = 8000;
 
 
+
     public static void main(String[] args) {
 
         try {
@@ -51,14 +52,15 @@ public class Server {
     }
 
 
-    private void listWorkers (){
-        for (Worker w: workers){
-            System.out.println(w.nickname);
+    private void listWorkers(PrintWriter out) {
+        for (Worker w : workers) {
+            out.println(w.nickname);
         }
     }
 
 
     //----------------------------------------------------------------------------------------------------------------------------
+
 
     public class Worker implements Runnable {
 
@@ -66,9 +68,15 @@ public class Server {
         private PrintWriter out;
         private BufferedReader in;
         private String nickname;
+        BufferedWriter saveLog;
 
         public Worker(Socket socket) {
             this.socket = socket;
+            try {
+                saveLog = new BufferedWriter(new FileWriter("resource/log.txt"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
 
@@ -76,23 +84,24 @@ public class Server {
         public void run() {
 
             try {
-
                 start();
                 String input = "";
 
-                while (!(input = in.readLine()).equals("*quit")) {
+                while (!(input = in.readLine()).equals("*QUIT")) {
 
-                    if (input.equals("*change")) {
+                    if (input.equals("*CHANGE")) {
                         nickname = in.readLine();
                         out.println("Your nickname has been changed to " + nickname);
                         continue;
                     }
 
-                    String message = nickname + ": " + input;
-                    System.out.println(message);
-                    sendAll(message);
-                }
+                    if (input.equals("*USERS")) {
+                        listWorkers(out);
+                        continue;
+                    }
 
+                    sendMessage(input);
+                }
                 closeConnection();
 
             } catch (IOException ex) {
@@ -109,14 +118,28 @@ public class Server {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             nickname = in.readLine();
 
-            out.println("WELCOME " + nickname + " :) \n\n-- Commands: --\n*quit to exit conversation \n*change to change nickname\n");
+            out.println("WELCOME " + nickname + " :) \n\n-- Commands: --\n*QUIT to exit conversation\n*CHANGE to change nickname\n*USERS to list all users logged in\n");
             System.out.println(nickname + " logged in (IPaddress: " + socket.getInetAddress() + ")");
+        }
+
+
+        private void sendMessage(String input) throws IOException {
+            String message = nickname + ": " + input;
+            System.out.println(message);
+            sendAll(message);
         }
 
 
         private void send(String message) {
             out.println(message);
+            try {
+                saveLog.write(message + "\n");
+                saveLog.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
 
 
         private void closeConnection() throws IOException {
@@ -126,6 +149,7 @@ public class Server {
             socket.close();
             out.close();
             in.close();
+            workers.remove(this);
         }
 
     }
